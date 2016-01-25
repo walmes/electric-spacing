@@ -1,6 +1,6 @@
 ;;; electric-spacing.el --- Insert operators with surrounding spaces smartly
 
-;; Copyright (C) 2004, 2005, 2007-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2004, 2005, 2007-2015 Free Software Foundation, Inc.
 
 ;; Author: William Xu <william.xwl@gmail.com>
 ;; Version: 5.0
@@ -25,7 +25,7 @@
 ;; Smart Operator mode is a minor mode which automatically inserts
 ;; surrounding spaces around operator symbols.  For example, `='
 ;; becomes ` = ', `+=' becomes ` += '.  This is most handy for writing
-;; C-style source code. Also follows the R-style when in ess-mode.
+;; C-style source code.
 ;;
 ;; Type `M-x electric-spacing-mode' to toggle this minor mode.
 
@@ -54,23 +54,21 @@
 
 (defvar electric-spacing-rules
   '((?= . electric-spacing-self-insert-command)
-    (?| . electric-spacing-self-insert-command)
-  ;  (?^ . electric-spacing-self-insert-command)
     (?< . electric-spacing-<)
     (?> . electric-spacing->)
     (?% . electric-spacing-%)
     (?+ . electric-spacing-+)
     (?- . electric-spacing--)
     (?* . electric-spacing-*)
+    (?/ . electric-spacing-/)
     (?& . electric-spacing-&)
+    (?| . electric-spacing-self-insert-command)
+    (?: . electric-spacing-:)
     (?? . electric-spacing-?)
-    (?! . electric-spacing-!)
-    ;; (?, . electric-spacing-\,)
+    (?, . electric-spacing-\,)
     (?~ . electric-spacing-~)
-  ;  (?/ . electric-spacing-/)
-  ;  (?: . electric-spacing-:)
-  ;  (?. . electric-spacing-.)
-  ))
+    (?. . electric-spacing-.)
+    (?^ . electric-spacing-self-insert-command)))
 
 (defun electric-spacing-post-self-insert-function ()
   (when (electric-spacing-should-run?)
@@ -80,17 +78,17 @@
         (delete-char -1)
         (funcall rule)))))
 
+
 ;;;###autoload
 (define-minor-mode electric-spacing-mode
   "Toggle automatic surrounding space insertion (Electric Spacing mode).
-   With a prefix argument ARG, enable Electric Spacing mode if
-   ARG is positive, and disable it otherwise.  If called from
-   Lisp, enable the mode if ARG is omitted or nil.
+With a prefix argument ARG, enable Electric Spacing mode if ARG is
+positive, and disable it otherwise.  If called from Lisp, enable
+the mode if ARG is omitted or nil.
 
-   This is a local minor mode.  When enabled, typing an operator
-   automatically inserts surrounding spaces.  e.g., `=' becomes `
-   = ',`+=' becomes ` += '.  This is very handy for many
-   programming languages."
+This is a local minor mode.  When enabled, typing an operator automatically
+inserts surrounding spaces.  e.g., `=' becomes ` = ',`+=' becomes ` += '.  This
+is very handy for many programming languages."
   :global nil
   :group 'electricity
   :lighter " _+_"
@@ -117,23 +115,22 @@
 
 (defun electric-spacing-insert-1 (op &optional only-where)
   "Insert operator OP with surrounding spaces.
-   e.g., `=' becomes ` = ', `+=' becomes ` += '.
-    - When `only-where' is 'after, we will insert space at back only;
-    - when `only-where' is 'before, we will insert space at front only;
-    - when `only-where' is 'middle, we will not insert space."
+e.g., `=' becomes ` = ', `+=' becomes ` += '.
+
+When `only-where' is 'after, we will insert space at back only;
+when `only-where' is 'before, we will insert space at front only;
+when `only-where' is 'middle, we will not insert space."
   (pcase only-where
     (`before (insert " " op))
     (`middle (insert op))
     (`after (insert op " "))
     (_
      (let ((begin? (bolp)))
-       (unless
-           (or (looking-back
-                (regexp-opt
-                 (mapcar 'char-to-string
-                         (mapcar 'car electric-spacing-rules)))
-                (line-beginning-position))
-               begin?)
+       (unless (or (looking-back (regexp-opt
+                                  (mapcar 'char-to-string
+                                          (mapcar 'car electric-spacing-rules)))
+                                 (line-beginning-position))
+                   begin?)
          (insert " "))
        (insert op " ")
        (when begin?
@@ -157,8 +154,8 @@
 
 (defun electric-spacing-lispy (op)
   "We're in a Lisp-ish mode, so let's look for parenthesis.
-   Meanwhile, if not found after ( operators are more likely to
-   be function names, so let's not get too insert-happy."
+Meanwhile, if not found after ( operators are more likely to be function names,
+so let's not get too insert-happy."
   (cond
    ((save-excursion
       (backward-char 1)
@@ -176,8 +173,8 @@
    (mapcar (lambda (el) (char-to-string (car el)))
            electric-spacing-rules)))
 
-;;;---------------------------------------------------------------------
-;;; Fine Tunings - eletric-spacing-* functions.
+
+;;; Fine Tunings
 
 (defun electric-spacing-< ()
   "See `electric-spacing-insert'."
@@ -186,10 +183,11 @@
              (looking-back
               (concat "\\("
                       (regexp-opt
-                       '("#include" "vector" "deque" "list" "map"
-                         "stack" "multimap" "set" "hash_map" "iterator"
-                         "template" "pair" "auto_ptr" "static_cast"
+                       '("#include" "vector" "deque" "list" "map" "stack"
+                         "multimap" "set" "hash_map" "iterator" "template"
+                         "pair" "auto_ptr" "static_cast"
                          "dynmaic_cast" "const_cast" "reintepret_cast"
+
                          "#import"))
                       "\\)\\ *")
               (line-beginning-position)))
@@ -207,8 +205,7 @@
            (electric-spacing-insert ":" 'middle)))
         ((derived-mode-p 'haskell-mode)
          (electric-spacing-insert ":"))
-        ((derived-mode-p 'python-mode)
-         (electric-spacing-python-:))
+        ((derived-mode-p 'python-mode) (electric-spacing-python-:))
         ((derived-mode-p 'ess-mode)
          (insert ":"))
         (t
@@ -265,7 +262,7 @@
 (defun electric-spacing-* ()
   "See `electric-spacing-insert'."
   (cond (c-buffer-is-cc-mode
-         ;; ,----[ cases ]
+         ;; ,----
          ;; | a * b;
          ;; | char *a;
          ;; | char **b;
@@ -284,18 +281,16 @@
                 (electric-spacing-insert "*" 'before))
                (t
                 (electric-spacing-insert "*"))))
+
         ;; Handle python *args and **kwargs
         ((derived-mode-p 'python-mode)
          ;; Can only occur after '(' ',' or on a new line, so just check
-         ;; for those. If it's just after a comma then also insert a
-         ;; space before the *.
-         (cond ((looking-back ",")
-                (insert " *"))
-               ((looking-back "[(,^)][ \t]*[*]?")
-                (insert "*"))
+         ;; for those. If it's just after a comma then also insert a space
+         ;; before the *.
+         (cond ((looking-back ",") (insert " *"))
+               ((looking-back "[(,^)][ \t]*[*]?") (insert "*"))
                ;; Othewise act as normal
-               (t
-                (electric-spacing-insert "*"))))
+               (t (electric-spacing-insert "*"))))
         (t
          (electric-spacing-insert "*"))))
 
@@ -328,25 +323,16 @@
              (delete-horizontal-space)))
          (electric-spacing-insert "-" 'middle)
          (indent-according-to-mode))
-        ((derived-mode-p 'ess-mode)
-         (cond ((or (looking-back "[=~,] *") (looking-back "<- *"))
-                (electric-spacing-insert "-" 'before))
-               ((looking-back "[([{/^] *")
-                (insert "-"))
-               ((looking-back "[0-9.]+[eE]")
-                (insert "-"))
-               ((looking-back "^\\s-*")
-                (insert "-"))
-               (t
-                (electric-spacing-insert "-"))))
+
         ;; exponent notation, e.g. 1e-10: don't space
         ((looking-back "[0-9.]+[eE]")
          (insert "-"))
+
         ;; a = -9
-        ((and (looking-back
-               (concat electric-spacing-operators-regexp " *"))
+        ((and (looking-back (concat electric-spacing-operators-regexp " *"))
               (not (looking-back "- *")))
           (electric-spacing-insert "-" 'before))
+
         (t
          (electric-spacing-insert "-"))))
 
@@ -357,17 +343,10 @@
         (t
          (electric-spacing-insert "?" 'after))))
 
-(defun electric-spacing-! ()
-  "See `electric-spacing-insert'."
-  (cond (c-buffer-is-cc-mode
-         (electric-spacing-insert "!"))
-        (t
-         (electric-spacing-insert "!" 'after))))
-
 (defun electric-spacing-% ()
   "See `electric-spacing-insert'."
   (cond (c-buffer-is-cc-mode
-         ;; ,----[ cases ]
+         ;; ,----
          ;; | a % b;
          ;; | printf("%d %d\n", a % b);
          ;; `----
@@ -392,15 +371,6 @@
                (delete-char -2)
                (insert "=~ "))
            (insert "~")))
-        ((derived-mode-p 'ess-mode)
-         (cond ((looking-back "\\(<-\\|[=,]\\) *")
-                (electric-spacing-insert "~" 'before))
-               ((looking-back "( *")
-                (insert "~"))
-               ((looking-back "^\\s-*")
-                (insert "~"))
-               (t
-                (electric-spacing-insert "~"))))
         (t
          (insert "~"))))
 
@@ -414,10 +384,10 @@
          (insert "/"))
         (t
          (electric-spacing-insert "/"))))
+
 
 (defun electric-spacing-enclosing-paren ()
-  "Return the opening parenthesis of the enclosing parens, or nil
-   if not inside any parens."
+  "Return the opening parenthesis of the enclosing parens, or nil if not inside any parens."
   (interactive)
   (let ((ppss (syntax-ppss)))
     (when (nth 1 ppss)
