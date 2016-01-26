@@ -37,7 +37,6 @@
 
 ;;; Code:
 
-(require 'cc-mode)
 (require 'thingatpt)
 
 ;;; electric-spacing minor mode
@@ -59,7 +58,6 @@
         (goto-char (electric--after-char-pos))
         (delete-char -1)
         (funcall rule)))))
-
 
 ;;;###autoload
 (define-minor-mode electric-spacing-mode
@@ -163,4 +161,3 @@ so let's not get too insert-happy."
 (provide 'electric-spacing)
 
 ;;; electric-spacing.el ends here
-	
